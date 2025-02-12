@@ -60,6 +60,7 @@ download_mode = col1.selectbox("Mode", ["one", "multiple"])
 download_type = col2.selectbox("Type", ["audio(mp3)", "video(mp4)"])
 
 
+@st.cache_data
 def create_download_link(file_path, file_name):
     with open(file_path, "rb") as f:
         bytes_data = f.read()

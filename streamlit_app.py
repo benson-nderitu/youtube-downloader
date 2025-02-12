@@ -250,7 +250,9 @@ with st.container(border=True):
         ):
             st.rerun()
     else:
-        urls = st.text_area("YouTube URLs (separate by commas)", height=100)
+        urls = st.text_area(
+            "YouTube URLs (separate by commas)", height=100, key="multipleURLs"
+        )
         url_list = urls.split(",")  # Split the input string into a list of URLs
         first_url = url_list[0].strip() if url_list else None
         audio_streams, video_streams = get_streams(first_url)
@@ -312,7 +314,14 @@ with st.container(border=True):
                 body=f"All {len_urls} files have been downloaded!",
                 icon=":material/done_all:",
             )
-        col2.button("Clear", icon=":material/mop:", type="tertiary")
+        if col2.button(
+            label="Clear",
+            on_click=clear_multiple_url,
+            icon=":material/mop:",
+            type="tertiary",
+            key="clear_multiple_url",
+        ):
+            st.rerun()
 
 blank_lines(1)
 

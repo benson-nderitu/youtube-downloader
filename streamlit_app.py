@@ -17,7 +17,7 @@ from utils import (
 
 st.set_page_config(
     page_title="Youtube Downloader",
-    page_icon="📺",
+    page_icon=":material/youtube_activity:",
     layout="wide",
     initial_sidebar_state="collapsed",
 )

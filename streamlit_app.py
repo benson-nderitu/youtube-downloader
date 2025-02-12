@@ -3,7 +3,6 @@ from pathlib import Path
 
 import streamlit as st
 import wx
-from pytube import YouTube
 from pytubefix import YouTube
 from pytubefix.exceptions import RegexMatchError
 

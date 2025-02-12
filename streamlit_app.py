@@ -4,7 +4,7 @@ from pathlib import Path
 
 import streamlit as st
 from pytubefix import YouTube
-from pytubefix.exceptions import RegexMatchError
+from pytubefix.exceptions import RegexMatchError, VideoUnavailable
 
 from utils import (
     audio_download,
@@ -67,14 +67,40 @@ def create_download_link(file_path, file_name):
     return f'<a href="data:application/octet-stream;base64,{b64}" download="{file_name}">Download {file_name}</a>'
 
 
+# def get_streams(url=None):
+#     if not url or not (url.startswith("http://") or url.startswith("https://")):
+#         st.warning("Please enter a valid YouTube URL.", icon=":material/info:")
+#         return [], []  # Return empty lists if the URL is invalid
+#     yt = YouTube(url)
+#     audio_streams = yt.streams.filter(only_audio=True)
+#     video_streams = yt.streams.filter(adaptive=True, only_video=True)
+#     return audio_streams, video_streams
 def get_streams(url=None):
-    if not url or not (url.startswith("http://") or url.startswith("https://")):
-        st.warning("Please enter a valid YouTube URL.", icon=":material/info:")
-        return [], []  # Return empty lists if the URL is invalid
-    yt = YouTube(url)
-    audio_streams = yt.streams.filter(only_audio=True)
-    video_streams = yt.streams.filter(adaptive=True, only_video=True)
-    return audio_streams, video_streams
+    """Get audio and video streams for a YouTube URL with error handling."""
+    try:
+        if not url or not (url.startswith("http://") or url.startswith("https://")):
+            st.warning("Please enter a valid YouTube URL.", icon="⚠️")
+            return [], []
+
+        yt = YouTube(url)
+        audio_streams = yt.streams.filter(only_audio=True)
+        video_streams = yt.streams.filter(adaptive=True, only_video=True)
+
+        if not audio_streams and not video_streams:
+            st.error("No streams found for this video.", icon="❌")
+            return [], []
+
+        return audio_streams, video_streams
+
+    except RegexMatchError:
+        st.error("Invalid YouTube URL format.", icon="❌")
+        return [], []
+    except VideoUnavailable:
+        st.error(f"Video is unavailable. It may be private or deleted.", icon="❌")
+        return [], []
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}", icon="❌")
+        return [], []
 
 
 # ---------------------------------------------------

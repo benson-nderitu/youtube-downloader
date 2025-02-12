@@ -6,6 +6,13 @@ import streamlit as st
 from pytubefix import YouTube
 from pytubefix.exceptions import RegexMatchError
 
+from utils import (
+    audio_download,
+    download_multiple_audio,
+    download_multiple_video,
+    video_download,
+)
+
 st.set_page_config(
     page_title="Youtube Downloader",
     page_icon="📺",
@@ -53,116 +60,11 @@ download_mode = col1.selectbox("Mode", ["one", "multiple"])
 download_type = col2.selectbox("Type", ["audio(mp3)", "video(mp4)"])
 
 
-# Function to get the default downloads folder based on the OS
-def get_default_download_folder():
-    if os.name == "nt":  # Windows
-        return str(Path.home() / "Downloads")
-    elif os.name == "posix":  # macOS and Linux
-        return str(Path.home() / "Downloads")
-    return str(Path.home())  # Fallback to home directory
-
-
-# Set default folder
-default_folder = get_default_download_folder()
-folder_path = default_folder  # Initialize folder_path with default value
-
-
-# Replace wx folder selection with direct download links
 def create_download_link(file_path, file_name):
     with open(file_path, "rb") as f:
         bytes_data = f.read()
     b64 = base64.b64encode(bytes_data).decode()
     return f'<a href="data:application/octet-stream;base64,{b64}" download="{file_name}">Download {file_name}</a>'
-
-
-# ---------------------------------------------------
-#             Functions
-# ---------------------------------------------------
-def audio_download(url: str) -> None:
-    try:
-        if not url.strip():
-            st.warning("Please enter a valid YouTube URL")
-            return
-        yt = YouTube(url)
-        video = yt.streams.filter(only_audio=True).first()
-
-        if not video:
-            st.error("No audio stream found for this video")
-            return
-
-        # Download to temporary location
-        temp_dir = "temp"
-        os.makedirs(temp_dir, exist_ok=True)
-        out_file = video.download(output_path=temp_dir)
-        base, ext = os.path.splitext(out_file)
-        new_file = base + ".mp3"
-        os.rename(out_file, new_file)
-
-        # Create download link
-        st.markdown(
-            create_download_link(new_file, os.path.basename(new_file)),
-            unsafe_allow_html=True,
-        )
-        st.success(f"{yt.title} is ready for download.", icon="✅")
-
-        # Clean up
-        os.remove(new_file)
-
-    except RegexMatchError:
-        st.error("Please enter a valid YouTube URL")
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
-
-
-def video_download(url: str, destination: str, itag: int) -> None:
-    """
-    Downloads video from YouTube URL and converts it to MP4.
-
-    Args:
-        url (str): YouTube video URL
-        destination (str): Output directory path
-
-    Raises:
-        RegexMatchError: If URL is invalid
-        Exception: For other errors during download/conversion
-    """
-    try:
-        if not url.strip():
-            st.warning("Please enter a valid YouTube URL")
-            return
-
-        # Create YouTube object and download video
-        yt = YouTube(url)
-        # yt.streams.filter(file_extension='mp4')
-        video = yt.streams.get_highest_resolution()
-        # video = yt.streams.get_by_itag(itag)
-        # video = yt.streams.get_highest_resolution() or yt.streams.get_by_itag(itag)
-
-        if not video:
-            st.error("No Video stream found for this video")
-            return
-
-        # Download and convert to MP4
-        out_file = video.download(output_path=destination, skip_existing=True)
-        base, ext = os.path.splitext(out_file)
-        new_file = base + ".mp4"
-        os.rename(out_file, new_file)
-        st.success(f"{yt.title} has been successfully downloaded.", icon="✅")
-
-    except RegexMatchError:
-        st.error("Please enter a valid YouTube URL")
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
-
-
-def get_streams(url=None):
-    if not url or not (url.startswith("http://") or url.startswith("https://")):
-        st.warning("Please enter a valid YouTube URL.", icon=":material/info:")
-        return [], []  # Return empty lists if the URL is invalid
-    yt = YouTube(url)
-    audio_streams = yt.streams.filter(only_audio=True)
-    video_streams = yt.streams.filter(adaptive=True, only_video=True)
-    return audio_streams, video_streams
 
 
 # ---------------------------------------------------
@@ -219,17 +121,10 @@ with st.container(border=True):
                 if not url:
                     message.warning("Please enter a valid URL.", icon="⚠️")
                     st.stop()
-
-                if folder_path is None:
-                    message.warning(
-                        "Please select a folder to save the file.", icon="⚠️"
-                    )
-                    st.stop()
-
                 if download_type == "audio(mp3)":
                     audio_download(url)
                 else:
-                    video_download(url, folder_path, itag)
+                    video_download(url, itag)
         if col2.button(
             label="Clear",
             on_click=clear_single_url,
@@ -286,18 +181,10 @@ with st.container(border=True):
                     message.warning("Please enter a valid URL.", icon="⚠️")
                     st.stop()
 
-                if folder_path is None:
-                    message.warning(
-                        "Please select a folder to save the file.", icon="⚠️"
-                    )
-                    st.stop()
-
                 if download_type == "audio(mp3)":
-                    for index, url in enumerate(url_list):
-                        audio_download(url)
+                    download_multiple_audio(url)
                 else:
-                    for index, url in enumerate(url_list):
-                        video_download(url, folder_path, itag)
+                    download_multiple_video(url, itag)
             len_urls = len(url_list)
             st.success(
                 body=f"All {len_urls} files have been downloaded!",

@@ -67,47 +67,9 @@ def create_download_link(file_path, file_name):
     return f'<a href="data:application/octet-stream;base64,{b64}" download="{file_name}">Download {file_name}</a>'
 
 
-# def get_streams(url=None):
-#     if not url or not (url.startswith("http://") or url.startswith("https://")):
-#         st.warning("Please enter a valid YouTube URL.", icon=":material/info:")
-#         return [], []  # Return empty lists if the URL is invalid
-#     yt = YouTube(url)
-#     audio_streams = yt.streams.filter(only_audio=True)
-#     video_streams = yt.streams.filter(adaptive=True, only_video=True)
-#     return audio_streams, video_streams
-def get_streams(url=None):
-    """Get audio and video streams for a YouTube URL with error handling."""
-    try:
-        if not url or not (url.startswith("http://") or url.startswith("https://")):
-            st.warning("Please enter a valid YouTube URL.", icon="⚠️")
-            return [], []
-
-        yt = YouTube(url)
-        audio_streams = yt.streams.filter(only_audio=True)
-        video_streams = yt.streams.filter(adaptive=True, only_video=True)
-
-        if not audio_streams and not video_streams:
-            st.error("No streams found for this video.", icon="❌")
-            return [], []
-
-        return audio_streams, video_streams
-
-    except RegexMatchError:
-        st.error("Invalid YouTube URL format.", icon="❌")
-        return [], []
-    except VideoUnavailable:
-        st.error(f"Video is unavailable. It may be private or deleted.", icon="❌")
-        return [], []
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}", icon="❌")
-        return [], []
-
-
 # ---------------------------------------------------
 #             Main content
 # ---------------------------------------------------
-
-
 def clear_single_url():
     st.session_state["singleURL"] = ""
 
@@ -121,32 +83,8 @@ with st.container(border=True):
     if download_mode == "one":
         url = st.text_input("Enter YouTube URL", key="singleURL")
         message = st.empty()  # Placeholder for warnings/messages
-        audio_streams, video_streams = get_streams(url)
-        col0, col1, col2 = st.columns(
-            [0.75, 0.65, 2], gap="medium", vertical_alignment="bottom"
-        )
-        with col0:
-            if download_type == "audio(mp3)":
-                stream_options = {f"{s.abr} - {s.mime_type}": s for s in audio_streams}
-                audio_quality = st.selectbox(
-                    "audio quality", options=list(stream_options.keys())
-                )
-            else:
-                stream_options = {
-                    f"{s.resolution} - {s.mime_type}": s for s in video_streams
-                }
-                video_quality = st.selectbox(
-                    "video quality", options=list(stream_options.keys())
-                )
+        col1, col2 = st.columns([1, 3], gap="medium", vertical_alignment="bottom")
 
-        if url:
-            stream = (
-                stream_options[audio_quality]
-                if download_type == "audio(mp3)"
-                else stream_options[video_quality]
-            )
-            itag = stream.itag
-            # st.write(f"Selected Stream itag: {itag}")
         if col1.button(
             "Download",
             type="primary",
@@ -160,7 +98,7 @@ with st.container(border=True):
                 if download_type == "audio(mp3)":
                     audio_download(url)
                 else:
-                    video_download(url, itag)
+                    video_download(url)
         if col2.button(
             label="Clear",
             on_click=clear_single_url,
@@ -175,34 +113,8 @@ with st.container(border=True):
         )
         url_list = urls.split(",")  # Split the input string into a list of URLs
         first_url = url_list[0].strip() if url_list else None
-        audio_streams, video_streams = get_streams(first_url)
         message = st.empty()
-        col0, col1, col2 = st.columns(
-            [0.5, 0.65, 2], gap="medium", vertical_alignment="bottom"
-        )
-        with col0:
-            if download_type == "audio(mp3)":
-                stream_options = {f"{s.abr} - {s.mime_type}": s for s in audio_streams}
-                audio_quality = st.selectbox(
-                    "audio quality", options=list(stream_options.keys()), disabled=True
-                )
-
-            else:
-                stream_options = {
-                    f"{s.resolution} - {s.mime_type}": s for s in video_streams
-                }
-                video_quality = st.selectbox(
-                    "video quality", options=list(stream_options.keys()), disabled=True
-                )
-
-        for url in url_list:
-            if url:
-                stream = (
-                    stream_options[audio_quality]
-                    if download_type == "audio(mp3)"
-                    else stream_options[video_quality]
-                )
-                itag = stream.itag
+        col1, col2 = st.columns([1, 3], gap="medium", vertical_alignment="bottom")
         if (
             col1.button(
                 "Download All",
@@ -213,19 +125,16 @@ with st.container(border=True):
             and urls
         ):
             with st.spinner("Downloading..."):
-                if not url:
+                if not urls:
                     message.warning("Please enter a valid URL.", icon="⚠️")
                     st.stop()
 
                 if download_type == "audio(mp3)":
-                    download_multiple_audio(url)
+                    download_multiple_audio(url_list)
                 else:
-                    download_multiple_video(url, itag)
+                    download_multiple_video(url_list)
             len_urls = len(url_list)
-            st.success(
-                body=f"All {len_urls} files have been downloaded!",
-                icon=":material/done_all:",
-            )
+
         if col2.button(
             label="Clear",
             on_click=clear_multiple_url,

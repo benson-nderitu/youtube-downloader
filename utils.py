@@ -22,7 +22,7 @@ def audio_download(url: str) -> None:
             st.error("No audio stream found for this video")
             return
 
-        # Download to temporary location
+        #  to temporary location
         temp_dir = "temp"
         os.makedirs(temp_dir, exist_ok=True)
         out_file = video.download(output_path=temp_dir)
@@ -35,11 +35,11 @@ def audio_download(url: str) -> None:
             bytes_data = f.read()
         b64 = base64.b64encode(bytes_data).decode()
         download_filename = os.path.basename(new_file)
+        # st.info("Click the link Below to download.", icon=":material/download:")
         st.markdown(
-            f'<a href="data:audio/mp3;base64,{b64}" download="{download_filename}">📥 Download {download_filename}</a>',
+            f'<a href="data:audio/mp3;base64,{b64}" download="{download_filename}">📥  {download_filename}</a>',
             unsafe_allow_html=True,
         )
-        st.success(f"{yt.title} is ready for download.", icon="✅")
 
         # Clean up after creating download link
         os.remove(new_file)
@@ -50,7 +50,7 @@ def audio_download(url: str) -> None:
         st.error(f"An error occurred: {str(e)}")
 
 
-def video_download(url: str, itag: int) -> None:
+def video_download(url: str) -> None:
     try:
         if not url.strip():
             st.warning("Please enter a valid YouTube URL")
@@ -63,7 +63,7 @@ def video_download(url: str, itag: int) -> None:
             st.error("No Video stream found for this video")
             return
 
-        # Download to temporary location
+        #  to temporary location
         temp_dir = "temp"
         os.makedirs(temp_dir, exist_ok=True)
         out_file = video.download(output_path=temp_dir)
@@ -76,11 +76,11 @@ def video_download(url: str, itag: int) -> None:
             bytes_data = f.read()
         b64 = base64.b64encode(bytes_data).decode()
         download_filename = os.path.basename(new_file)
+        # st.info("Click the link Below to download.", icon=":material/download:")
         st.markdown(
-            f'<a href="data:video/mp4;base64,{b64}" download="{download_filename}">📥 Download {download_filename}</a>',
+            f'<a href="data:video/mp4;base64,{b64}" download="{download_filename}">📥  {download_filename}</a>',
             unsafe_allow_html=True,
         )
-        st.success(f"{yt.title} is ready for download.", icon="✅")
 
         # Clean up after creating download link
         os.remove(new_file)
@@ -109,7 +109,7 @@ def download_multiple_audio(url_list: list) -> None:
                     st.error(f"No audio stream found for: {yt.title}")
                     continue
 
-                # Download to temporary location
+                #  to temporary location
                 temp_dir = "temp"
                 os.makedirs(temp_dir, exist_ok=True)
                 out_file = video.download(output_path=temp_dir)
@@ -122,11 +122,11 @@ def download_multiple_audio(url_list: list) -> None:
                     bytes_data = f.read()
                 b64 = base64.b64encode(bytes_data).decode()
                 download_filename = os.path.basename(new_file)
+                # st.info("Click the link Below to download.", icon=":material/download:")
                 st.markdown(
-                    f'<a href="data:audio/mp3;base64,{b64}" download="{download_filename}">📥 Download {download_filename}</a>',
+                    f'<a href="data:audio/mp3;base64,{b64}" download="{download_filename}">📥  {download_filename}</a>',
                     unsafe_allow_html=True,
                 )
-                st.success(f"{yt.title} is ready for download.", icon="✅")
 
                 # Update progress
                 progress = int(index / total_urls * 100)
@@ -145,7 +145,7 @@ def download_multiple_audio(url_list: list) -> None:
         st.error(f"An error occurred: {str(e)}")
 
 
-def download_multiple_video(url_list: list, itag: int) -> None:
+def download_multiple_video(url_list: list) -> None:
     try:
         # Create progress bar
         progress_bar = st.progress(0)
@@ -163,7 +163,7 @@ def download_multiple_video(url_list: list, itag: int) -> None:
                     st.error(f"No video stream found for: {yt.title}")
                     continue
 
-                # Download to temporary location
+                #  to temporary location
                 temp_dir = "temp"
                 os.makedirs(temp_dir, exist_ok=True)
                 out_file = video.download(output_path=temp_dir)
@@ -176,11 +176,11 @@ def download_multiple_video(url_list: list, itag: int) -> None:
                     bytes_data = f.read()
                 b64 = base64.b64encode(bytes_data).decode()
                 download_filename = os.path.basename(new_file)
+                # st.info("Click the link Below to download.", icon=":material/download:")
                 st.markdown(
-                    f'<a href="data:video/mp4;base64,{b64}" download="{download_filename}">📥 Download {download_filename}</a>',
+                    f'<a href="data:video/mp4;base64,{b64}" download="{download_filename}">📥  {download_filename}</a>',
                     unsafe_allow_html=True,
                 )
-                st.success(f"{yt.title} is ready for download.", icon="✅")
 
                 # Update progress
                 progress = int(index / total_urls * 100)

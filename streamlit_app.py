@@ -67,6 +67,16 @@ def create_download_link(file_path, file_name):
     return f'<a href="data:application/octet-stream;base64,{b64}" download="{file_name}">Download {file_name}</a>'
 
 
+def get_streams(url=None):
+    if not url or not (url.startswith("http://") or url.startswith("https://")):
+        st.warning("Please enter a valid YouTube URL.", icon=":material/info:")
+        return [], []  # Return empty lists if the URL is invalid
+    yt = YouTube(url)
+    audio_streams = yt.streams.filter(only_audio=True)
+    video_streams = yt.streams.filter(adaptive=True, only_video=True)
+    return audio_streams, video_streams
+
+
 # ---------------------------------------------------
 #             Main content
 # ---------------------------------------------------

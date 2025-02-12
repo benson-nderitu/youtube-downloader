@@ -91,16 +91,6 @@ def video_download(url: str, itag: int) -> None:
         st.error(f"An error occurred: {str(e)}")
 
 
-def get_streams(url=None):
-    if not url or not (url.startswith("http://") or url.startswith("https://")):
-        st.warning("Please enter a valid YouTube URL.", icon=":material/info:")
-        return [], []  # Return empty lists if the URL is invalid
-    yt = YouTube(url)
-    audio_streams = yt.streams.filter(only_audio=True)
-    video_streams = yt.streams.filter(adaptive=True, only_video=True)
-    return audio_streams, video_streams
-
-
 def download_multiple_audio(url_list: list) -> None:
     try:
         # Create progress bar

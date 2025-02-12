@@ -1,8 +1,8 @@
-import base64
 import os
 from pathlib import Path
 
 import streamlit as st
+import wx
 from pytubefix import YouTube
 from pytubefix.exceptions import RegexMatchError
 
@@ -66,19 +66,34 @@ def get_default_download_folder():
 default_folder = get_default_download_folder()
 folder_path = default_folder  # Initialize folder_path with default value
 
+with col4:
+    # st.write(f"Default folder: {folder_path}")
+    app = wx.App(False)  # Create a new app instance
+    if st.button(
+        "Select a folder to save",
+        icon=":material/folder_open:",
+        type="secondary",
+        use_container_width=True,
+    ):
+        dialog = wx.DirDialog(
+            None, "Select a folder:", style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON
+        )
 
-# Replace wx folder selection with direct download links
-def create_download_link(file_path, file_name):
-    with open(file_path, "rb") as f:
-        bytes_data = f.read()
-    b64 = base64.b64encode(bytes_data).decode()
-    return f'<a href="data:application/octet-stream;base64,{b64}" download="{file_name}">Download {file_name}</a>'
+        if dialog.ShowModal() == wx.ID_OK:
+            folder_path = dialog.GetPath()  # Update folder_path with user-selected path
+            st.success(f"Selected folder: {folder_path}", icon="✅")
+        else:
+            st.warning(f"Using default folder: {folder_path}")
+
+        dialog.Destroy()
+# st.write(f"Selected folder: {folder_path}")
+# folder_path = None  # Reset folder_path to None
 
 
 # ---------------------------------------------------
 #             Functions
 # ---------------------------------------------------
-def audio_download(url: str) -> None:
+def audio_download(url: str, destination: str) -> None:
     try:
         if not url.strip():
             st.warning("Please enter a valid YouTube URL")
@@ -89,24 +104,19 @@ def audio_download(url: str) -> None:
         if not video:
             st.error("No audio stream found for this video")
             return
-
-        # Download to temporary location
-        temp_dir = "temp"
-        os.makedirs(temp_dir, exist_ok=True)
-        out_file = video.download(output_path=temp_dir)
+        out_file = video.download(output_path=destination, skip_existing=True)
         base, ext = os.path.splitext(out_file)
         new_file = base + ".mp3"
+        # Check if MP3 file already exists
+        if os.path.exists(new_file):
+            os.remove(out_file)  # Clean up the temporary file
+            st.info(
+                f"😩 File already exists: {os.path.basename(new_file)}",
+                icon=":material/error:",
+            )
+            return
         os.rename(out_file, new_file)
-
-        # Create download link
-        st.markdown(
-            create_download_link(new_file, os.path.basename(new_file)),
-            unsafe_allow_html=True,
-        )
-        st.success(f"{yt.title} is ready for download.", icon="✅")
-
-        # Clean up
-        os.remove(new_file)
+        st.success(f"{yt.title} has been successfully downloaded.", icon="✅")
 
     except RegexMatchError:
         st.error("Please enter a valid YouTube URL")
@@ -227,7 +237,7 @@ with st.container(border=True):
                     st.stop()
 
                 if download_type == "audio(mp3)":
-                    audio_download(url)
+                    audio_download(url, folder_path)
                 else:
                     video_download(url, folder_path, itag)
         if col2.button(
@@ -294,7 +304,7 @@ with st.container(border=True):
 
                 if download_type == "audio(mp3)":
                     for index, url in enumerate(url_list):
-                        audio_download(url)
+                        audio_download(url, folder_path)
                 else:
                     for index, url in enumerate(url_list):
                         video_download(url, folder_path, itag)

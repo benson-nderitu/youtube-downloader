@@ -1,0 +1,13 @@
+[theme]
+base="light"
+primaryColor="red"
+backgroundColor="#fff"
+secondaryBackgroundColor="#f0f0f0"
+textColor="#000000"
+font="sans serif"
+
+[server]
+runOnSave=true
+
+[client]
+showErrorDetails = "full"

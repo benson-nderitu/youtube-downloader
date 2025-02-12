@@ -19,6 +19,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
 # ------------------------------------------------------------
 #     CUSTOM CSS TO REMOVE PADDING
 # ------------------------------------------------------------
@@ -145,44 +146,44 @@ with st.container(border=True):
         ):
             st.rerun()
 
-blank_lines(1)
+# blank_lines(1)
 
-if st.toggle("Show video(s) info", False, help="Show video(s) info"):
-    with st.spinner("Loading..."):
-        if download_mode == "one":
-            if url:
-                container = st.container(border=True)
-                col1, col2 = container.columns([1, 1])
-                with col1:
-                    yt = YouTube(url)
-                    st.markdown(f"**Title:** {yt.title}")
-                    st.markdown(f"**Length:** {yt.length} sec")
+# if st.toggle("Show video(s) info", False, help="Show video(s) info"):
+#     with st.spinner("Loading..."):
+#         if download_mode == "one":
+#             if url:
+#                 container = st.container(border=True)
+#                 col1, col2 = container.columns([1, 1])
+#                 with col1:
+#                     yt = YouTube(url)
+#                     st.markdown(f"**Title:** {yt.title}")
+#                     st.markdown(f"**Length:** {yt.length} sec")
 
-                with col2:
-                    thumbnail = yt.thumbnail_url
-                    st.image(thumbnail)
-        if download_mode == "multiple":
-            if urls:
-                for index, url in enumerate(
-                    url_list
-                ):  # Enumerate to get both index and value
-                    if index % 3 == 0:
-                        col1, col2, col3 = st.columns(
-                            3, border=True
-                        )  # Create three columns
-                        with col1:
-                            yt = YouTube(url.strip())
-                            st.markdown(f"**Title:** {yt.title}")
-                            st.markdown(f"**Length:** {yt.length} sec")
+#                 with col2:
+#                     thumbnail = yt.thumbnail_url
+#                     st.image(thumbnail)
+#         if download_mode == "multiple":
+#             if urls:
+#                 for index, url in enumerate(
+#                     url_list
+#                 ):  # Enumerate to get both index and value
+#                     if index % 3 == 0:
+#                         col1, col2, col3 = st.columns(
+#                             3, border=True
+#                         )  # Create three columns
+#                         with col1:
+#                             yt = YouTube(url.strip())
+#                             st.markdown(f"**Title:** {yt.title}")
+#                             st.markdown(f"**Length:** {yt.length} sec")
 
-                    elif index % 3 == 1:
-                        with col2:
-                            yt = YouTube(url.strip())
-                            st.markdown(f"**Title:** {yt.title}")
-                            st.markdown(f"**Length:** {yt.length} sec")
+#                     elif index % 3 == 1:
+#                         with col2:
+#                             yt = YouTube(url.strip())
+#                             st.markdown(f"**Title:** {yt.title}")
+#                             st.markdown(f"**Length:** {yt.length} sec")
 
-                    else:
-                        with col3:
-                            yt = YouTube(url.strip())
-                            st.markdown(f"**Title:** {yt.title}")
-                            st.markdown(f"**Length:** {yt.length} sec")
+#                     else:
+#                         with col3:
+#                             yt = YouTube(url.strip())
+#                             st.markdown(f"**Title:** {yt.title}")
+#                             st.markdown(f"**Length:** {yt.length} sec")

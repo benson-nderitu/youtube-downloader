@@ -82,7 +82,7 @@ with col4:
 
         if dialog.ShowModal() == wx.ID_OK:
             folder_path = dialog.GetPath()  # Update folder_path with user-selected path
-            st.success(f"Selected folder: {folder_path}")
+            st.success(f"Selected folder: {folder_path}", icon="✅")
         else:
             st.warning(f"Using default folder: {folder_path}")
 
@@ -95,38 +95,29 @@ with col4:
 #             Functions
 # ---------------------------------------------------
 def audio_download(url: str, destination: str) -> None:
-    """
-    Downloads audio from YouTube URL and converts it to MP3.
-
-    Args:
-        url (str): YouTube video URL
-        destination (str): Output directory path
-
-    Raises:
-        RegexMatchError: If URL is invalid
-        Exception: For other errors during download/conversion
-    """
     try:
         if not url.strip():
             st.warning("Please enter a valid YouTube URL")
             return
-
-        # Create YouTube object and download audio
         yt = YouTube(url)
         video = yt.streams.filter(only_audio=True).first()
 
         if not video:
             st.error("No audio stream found for this video")
             return
-
-        # Download and convert to MP3
         out_file = video.download(output_path=destination, skip_existing=True)
         base, ext = os.path.splitext(out_file)
         new_file = base + ".mp3"
+        # Check if MP3 file already exists
+        if os.path.exists(new_file):
+            os.remove(out_file)  # Clean up the temporary file
+            st.info(
+                f"😩 File already exists: {os.path.basename(new_file)}",
+                icon=":material/error:",
+            )
+            return
         os.rename(out_file, new_file)
-
-        # Show success message
-        st.success(f"{yt.title} has been successfully downloaded.")
+        st.success(f"{yt.title} has been successfully downloaded.", icon="✅")
 
     except RegexMatchError:
         st.error("Please enter a valid YouTube URL")
@@ -153,9 +144,10 @@ def video_download(url: str, destination: str, itag: int) -> None:
 
         # Create YouTube object and download video
         yt = YouTube(url)
-        yt.streams.filter(file_extension='mp4')
-        yt.streams.get_highest_resolution()
-        video = yt.streams.get_by_itag(itag)
+        # yt.streams.filter(file_extension='mp4')
+        video = yt.streams.get_highest_resolution()
+        # video = yt.streams.get_by_itag(itag)
+        # video = yt.streams.get_highest_resolution() or yt.streams.get_by_itag(itag)
 
         if not video:
             st.error("No Video stream found for this video")
@@ -164,11 +156,9 @@ def video_download(url: str, destination: str, itag: int) -> None:
         # Download and convert to MP4
         out_file = video.download(output_path=destination, skip_existing=True)
         base, ext = os.path.splitext(out_file)
-        new_file = base +"{itag}" + ".mp4"
+        new_file = base + ".mp4"
         os.rename(out_file, new_file)
-
-        # Show success message
-        st.success(f"{yt.title} has been successfully downloaded.")
+        st.success(f"{yt.title} has been successfully downloaded.", icon="✅")
 
     except RegexMatchError:
         st.error("Please enter a valid YouTube URL")
@@ -178,12 +168,13 @@ def video_download(url: str, destination: str, itag: int) -> None:
 
 def get_streams(url=None):
     if not url or not (url.startswith("http://") or url.startswith("https://")):
-        st.warning("Please enter a valid YouTube URL.", icon = ":material/info:")
+        st.warning("Please enter a valid YouTube URL.", icon=":material/info:")
         return [], []  # Return empty lists if the URL is invalid
     yt = YouTube(url)
     audio_streams = yt.streams.filter(only_audio=True)
     video_streams = yt.streams.filter(adaptive=True, only_video=True)
     return audio_streams, video_streams
+
 
 # ---------------------------------------------------
 #             Main content
@@ -210,15 +201,25 @@ with st.container(border=True):
         with col0:
             if download_type == "audio(mp3)":
                 stream_options = {f"{s.abr} - {s.mime_type}": s for s in audio_streams}
-                audio_quality = st.selectbox("audio quality", options= list(stream_options.keys()))
+                audio_quality = st.selectbox(
+                    "audio quality", options=list(stream_options.keys())
+                )
             else:
-                stream_options = {f"{s.resolution} - {s.mime_type}": s for s in video_streams}
-                video_quality = st.selectbox("video quality", options= list(stream_options.keys()))
+                stream_options = {
+                    f"{s.resolution} - {s.mime_type}": s for s in video_streams
+                }
+                video_quality = st.selectbox(
+                    "video quality", options=list(stream_options.keys())
+                )
 
         if url:
-            stream = stream_options[audio_quality] if download_type == "audio(mp3)" else stream_options[video_quality]
+            stream = (
+                stream_options[audio_quality]
+                if download_type == "audio(mp3)"
+                else stream_options[video_quality]
+            )
             itag = stream.itag
-            st.write(f"Selected Stream itag: {itag}")
+            # st.write(f"Selected Stream itag: {itag}")
         if col1.button(
             "Download",
             type="primary",
@@ -250,17 +251,36 @@ with st.container(border=True):
             st.rerun()
     else:
         urls = st.text_area("YouTube URLs (separate by commas)", height=100)
+        url_list = urls.split(",")  # Split the input string into a list of URLs
+        first_url = url_list[0].strip() if url_list else None
+        audio_streams, video_streams = get_streams(first_url)
+        message = st.empty()
         col0, col1, col2 = st.columns(
             [0.5, 0.65, 2], gap="medium", vertical_alignment="bottom"
         )
         with col0:
             if download_type == "audio(mp3)":
-                options = ["best", "worst"]
-                audio_quality = st.selectbox("Quality", options=options)
+                stream_options = {f"{s.abr} - {s.mime_type}": s for s in audio_streams}
+                audio_quality = st.selectbox(
+                    "audio quality", options=list(stream_options.keys()), disabled=True
+                )
 
             else:
-                options = ["best", "worst", "highest"]
-                video_quality = st.selectbox("Quality", options=options)
+                stream_options = {
+                    f"{s.resolution} - {s.mime_type}": s for s in video_streams
+                }
+                video_quality = st.selectbox(
+                    "video quality", options=list(stream_options.keys()), disabled=True
+                )
+
+        for url in url_list:
+            if url:
+                stream = (
+                    stream_options[audio_quality]
+                    if download_type == "audio(mp3)"
+                    else stream_options[video_quality]
+                )
+                itag = stream.itag
         if (
             col1.button(
                 "Download All",
@@ -270,48 +290,68 @@ with st.container(border=True):
             )
             and urls
         ):
-            url_list = urls.split("\n")
-            for url in url_list:
-                download_video(url.strip(), download_type, save_path)
-            st.success("All videos have been downloaded!")
+            with st.spinner("Downloading..."):
+                if not url:
+                    message.warning("Please enter a valid URL.", icon="⚠️")
+                    st.stop()
+
+                if folder_path is None:
+                    message.warning(
+                        "Please select a folder to save the file.", icon="⚠️"
+                    )
+                    st.stop()
+
+                if download_type == "audio(mp3)":
+                    for index, url in enumerate(url_list):
+                        audio_download(url, folder_path)
+                else:
+                    for index, url in enumerate(url_list):
+                        video_download(url, folder_path, itag)
+            len_urls = len(url_list)
+            st.success(
+                body=f"All {len_urls} files have been downloaded!",
+                icon=":material/done_all:",
+            )
         col2.button("Clear", icon=":material/mop:", type="tertiary")
 
 blank_lines(1)
-st.markdown("Video Info")
-if download_mode == "one":
-    if url:
-        container = st.container(border= True)
-        col1, col2 = container.columns([1, 1])
-        with col1:
-            yt = YouTube(url)
-            st.markdown(f"**Title:** {yt.title}")
-            st.markdown(f"**Length:** {yt.length} sec")
-            
-        with col2:
-            thumbnail = yt.thumbnail_url
-            st.image(thumbnail)
-if download_mode == "multiple":
-    if urls:
-        url_list = urls.split(",")  # Split the input string into a list of URLs
-        for index, url in enumerate(url_list):  # Use enumerate to get both index and value
-            if index % 3 == 0:  # Check if the index is a multiple of 3
-                col1, col2, col3 = st.columns(3, border= True)  # Create three columns
+
+if st.toggle("Show video(s) info", False, help="Show video(s) info"):
+    with st.spinner("Loading..."):
+        if download_mode == "one":
+            if url:
+                container = st.container(border=True)
+                col1, col2 = container.columns([1, 1])
                 with col1:
-                    yt = YouTube(url.strip())  # Use 'url' for each video, stripping whitespace
+                    yt = YouTube(url)
                     st.markdown(f"**Title:** {yt.title}")
                     st.markdown(f"**Length:** {yt.length} sec")
-                    
-            elif index % 3 == 1:  # Check if the index is 1 modulo 3
+
                 with col2:
-                    yt = YouTube(url.strip())  # Use 'url' for each video, stripping whitespace
-                    st.markdown(f"**Title:** {yt.title}")
-                    st.markdown(f"**Length:** {yt.length} sec")
-                    
-            else:  # For index 2 modulo 3
-                with col3:
-                    yt = YouTube(url.strip())  # Use 'url' for each video, stripping whitespace
-                    st.markdown(f"**Title:** {yt.title}")
-                    st.markdown(f"**Length:** {yt.length} sec")
-                    
-            # ... existing code ...
-    
+                    thumbnail = yt.thumbnail_url
+                    st.image(thumbnail)
+        if download_mode == "multiple":
+            if urls:
+                for index, url in enumerate(
+                    url_list
+                ):  # Enumerate to get both index and value
+                    if index % 3 == 0:
+                        col1, col2, col3 = st.columns(
+                            3, border=True
+                        )  # Create three columns
+                        with col1:
+                            yt = YouTube(url.strip())
+                            st.markdown(f"**Title:** {yt.title}")
+                            st.markdown(f"**Length:** {yt.length} sec")
+
+                    elif index % 3 == 1:
+                        with col2:
+                            yt = YouTube(url.strip())
+                            st.markdown(f"**Title:** {yt.title}")
+                            st.markdown(f"**Length:** {yt.length} sec")
+
+                    else:
+                        with col3:
+                            yt = YouTube(url.strip())
+                            st.markdown(f"**Title:** {yt.title}")
+                            st.markdown(f"**Length:** {yt.length} sec")
